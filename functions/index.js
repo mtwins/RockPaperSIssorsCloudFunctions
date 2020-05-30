@@ -7,9 +7,9 @@ const ALGOLIA_ADMIN_KEY = functions.config().algolia.api_key;
 const ALGOLIA_SEARCH_KEY = functions.config().algolia.search_key;
 
 const ALGOLIA_INDEX_NAME = 'rock-paper-sissors';
-const client = algoliasearch(ALGOLIA_ID, ALGOLIA_SEARCH_KEY);
+const client = algoliasearch(ALGOLIA_ID, ALGOLIA_ADMIN_KEY);
 console.log(ALGOLIA_ID)
-console.log(ALGOLIA_SEARCH_KEY)
+const index = client.initIndex(ALGOLIA_INDEX_NAME);
 //update index when new user created/deleted
 exports.onUserCreated = functions.firestore.document('Users/{userId}').onCreate((snap, context) => {
     // Get the note document
@@ -19,9 +19,14 @@ exports.onUserCreated = functions.firestore.document('Users/{userId}').onCreate(
     note.objectID = context.params.userId;
   
     // Write to the algolia index
-    const index = client.initIndex(ALGOLIA_INDEX_NAME);
+
     return index.saveObject(note);
   });
+
+  exports.onUserDeleted = functions.firestore.document('Users/{userId}')
+  .onDelete(snapshot => 
+      index.deleteObject(snapshot.id)
+  );
 
   // [END update_index_function]
 // // Create and Deploy Your First Cloud Functions
